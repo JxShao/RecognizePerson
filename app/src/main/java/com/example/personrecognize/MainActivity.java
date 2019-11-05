@@ -15,6 +15,14 @@ public class MainActivity extends AppCompatActivity{
     private RecognizeFragment rf;
     private UploadInformFragment uf;
 
+    private Bitmap bitmap;
+    private String RecognizeResult;
+
+    public Bitmap getBitmap() { return bitmap; }
+    public void setBitmap(Bitmap bitmap) { this.bitmap = bitmap; }
+    public String getRecognizeResult() { return RecognizeResult; }
+    public void setRecognizeResult(String recognizeResult) { RecognizeResult = recognizeResult; }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,11 +55,12 @@ public class MainActivity extends AppCompatActivity{
         switch (requestCode) {
             case 1:
                 //此时，相机拍照完毕
+                //处理识别fragment中的拍照请求
                 if (resultCode == RESULT_OK) {
 
                     try {
                         rf = (RecognizeFragment)getSupportFragmentManager().findFragmentByTag("RecognizeFragment");
-                        Bitmap bitmap = PhotoManager.handleTakenPhoto(this,rf.getImgUri());
+                        bitmap = PhotoManager.handleTakenPhoto(this,rf.getImgUri());
                         ((ImageView)rf.getView().findViewById(R.id.rf_showPhotoIv)).setImageBitmap(bitmap);
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
@@ -59,11 +68,12 @@ public class MainActivity extends AppCompatActivity{
                 }
                 break;
             case 2:
+                //处理上传fragment中的拍照请求
                 if (resultCode == RESULT_OK) {
 
                     try {
                         uf = (UploadInformFragment) getSupportFragmentManager().findFragmentByTag("UploadInformFragment");
-                        Bitmap bitmap = PhotoManager.handleTakenPhoto(this,uf.getImgUri());
+                        bitmap = PhotoManager.handleTakenPhoto(this,uf.getImgUri());
                         ((ImageView)uf.getView().findViewById(R.id.uf_showPhotoIv)).setImageBitmap(bitmap);
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
@@ -72,8 +82,9 @@ public class MainActivity extends AppCompatActivity{
                 break;
 
             case 3:
+                //处理Recognizefragment中的从相册中选择照片请求
                 rf = (RecognizeFragment)getSupportFragmentManager().findFragmentByTag("RecognizeFragment");
-                rf.handleChoosePhoto(data);
+                rf.handleChoosePhoto(data);  //选择的照片保存在名为data的Intent中
                 break;
         }
     }

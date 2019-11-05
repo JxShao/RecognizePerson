@@ -1,6 +1,7 @@
 package com.example.personrecognize;
 
 import android.Manifest;
+//import android.content.ContentgitResolver;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -134,7 +135,7 @@ public class RecognizeFragment extends Fragment implements View.OnClickListener 
             Log.i("RF","图片文件名为"+fileName);
 
             try {
-                InputStream inputStream=contentResolver.openInputStream(uri); //将URI文件转换为InputStream输入流
+                InputStream inputStream= ((ContentResolver) contentResolver).openInputStream(uri); //将URI文件转换为InputStream输入流
                 fileBuff=convertToBytes(inputStream); //从输入流中读取数据，并转换成字节数组
                 bitmap= BitmapFactory.decodeByteArray(fileBuff,0,fileBuff.length);
                 showPhotoIv.setImageBitmap(bitmap);
@@ -163,54 +164,13 @@ public class RecognizeFragment extends Fragment implements View.OnClickListener 
 
     public void recognize()
     {
-        new Thread(){
-            @Override
-            public void run() {
-                client=new OkHttpClient();
-                String Base64Photo=PhotoManager.ChangeBitmapToBase64(bitmap);
-                JSONObject obj=new JSONObject();
-                try {
-                    obj.put("image",Base64Photo);
-                    obj.put("image_type","BASE64");
-                    obj.put("group_id_list","group1");
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                RequestBody requestBody=  RequestBody
-                        .create(MediaType.parse("application/json; charset=utf-8"),""+obj.toString());
-                Log.i("base64字符串",Base64Photo);
-
-                //整个上传的请求体部分（普通表单+文件上传域）
-                //RequestBody requestBody=new MultipartBody.Builder()
-                        //.setType(MultipartBody.FORM)
-                        //.addFormDataPart("image", "myPhoto.jpg",formBody)
-                        //.build();
-                Request request = new Request.Builder()
-                        .url("https://aip.baidubce.com/rest/2.0/face/v3/search?access_token=24.29062b34a7fc64f68465706de4b9a2a8.2592000.1575358784.282335-17603369")
-                        .post(requestBody)
-                        .build();
-
-                try {
-                    Log.i("发送请求",""+requestBody);
-                    response = client.newCall(request).execute();
-                    System.out.println(response.body().string());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }.start();
+        ((MainActivity)getActivity()).setBitmap(bitmap);
+        //显示新的fragment
+        getActivity().getSupportFragmentManager().beginTransaction()
+                .replace(R.id.fragContainer,ShowRecognizeResultFragment.newInstance(),"ShowRecognizeResultFragment")
+                .addToBackStack(null)
+                .commit();
     }
 
-    private void parseJSON(String jsonData) {
-        try {
-            JSONObject object = new JSONObject(jsonData);
-            String name = object.getString("RESULT");
-            //日志
-            Log.d("name", "结果是：" + name);
-
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-    }
 
 }
