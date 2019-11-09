@@ -18,6 +18,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import java.io.File;
+import java.util.ArrayList;
 
 public class UploadInformFragment extends Fragment implements View.OnClickListener {
     private Button takePhotoBtn;
@@ -30,17 +31,21 @@ public class UploadInformFragment extends Fragment implements View.OnClickListen
     private File outImg;
     private Uri imgUri;
     private int score;
-    private boolean flag;
+    private ArrayList<Person> personList;
 
+
+    private int errorCode;
+    public int getErrorCode() { return errorCode; }
+    public void setErrorCode(int errorCode) { this.errorCode = errorCode; }
+
+    public ArrayList<Person> getPersonList() { return personList; }
+    public void setPersonList(ArrayList<Person> personList) { this.personList = personList; }
     public int getScore() {
         return score;
     }
-
     public void setScore(int score) {
         this.score = score;
     }
-
-    //private byte[] fileBuff;
 
     public File getOutImg() {
         return outImg;
@@ -67,7 +72,8 @@ public class UploadInformFragment extends Fragment implements View.OnClickListen
         showPhotoIv = root.findViewById(R.id.uf_showPhotoIv);
         nameEt = root.findViewById(R.id.uf_nameEt);
         informEt = root.findViewById(R.id.uf_informTv);
-
+        imgUri=null;
+        errorCode=-1;
         takePhotoBtn.setOnClickListener(this);
         uploadInformBtn.setOnClickListener(this);
 
@@ -77,7 +83,6 @@ public class UploadInformFragment extends Fragment implements View.OnClickListen
     @Override
     public void onStart() {
         super.onStart();
-        flag=false;
         score = -1;
         resultDialog = new AlertDialog.Builder(this.getContext())
                 .setTitle("结果")
@@ -85,7 +90,7 @@ public class UploadInformFragment extends Fragment implements View.OnClickListen
                 .setPositiveButton("确定", new DialogInterface.OnClickListener() {//添加"Yes"按钮
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
-
+                        //getActivity().getSupportFragmentManager().popBackStack();
                     }
                 })
                 .create();
@@ -101,7 +106,7 @@ public class UploadInformFragment extends Fragment implements View.OnClickListen
         switch (view.getId()) {
             case R.id.uf_takePhotoBtn:
                 PhotoManager.takePhoto(this.getActivity(), this);
-                Log.i("UF", ((MainActivity) getActivity()).getBitmap() + "");
+                Log.i("UF拍摄的照片", ((MainActivity) getActivity()).getBitmap() + "");
                 break;
             case R.id.uf_uploadInformBtn:
                 upLoadInform();
@@ -111,45 +116,60 @@ public class UploadInformFragment extends Fragment implements View.OnClickListen
 
     public void upLoadInform() {
         final String uname = nameEt.getText().toString();
+        //Log.i("填写的姓名为",uname.equals()+"啦啦啦啦啦");
         final String uinform = informEt.getText().toString();
-        Log.i("UF", "信息为" + uname + uinform);
-        new Thread() {
-            @Override
-            public void run() {
-                AccessBaiduManager.sendPhotoToRecognize(getActivity(), ((MainActivity) getActivity()).getBitmap());
-                flag=true;
-            }
-        }.start();
-
-        while(!flag)
+        if(nameEt.length()<1 || informEt.length()<1)
         {
-            //等待baidu返回结果
+            resultDialog.setMessage("请填写必要信息！");
+            resultDialog.show();
         }
-        AccessBaiduManager.handleBaiDuRecognizeResponse(((MainActivity)getActivity()).getRecognizeResult(),getActivity(),this);
-
-        Log.i("UF", score + "");
-        if (score >= 80) {
-            //Toast t=Toast.makeText(getContext(),"此人信息已存在",Toast.LENGTH_SHORT);
-            //t.show();
-            resultDialog.setMessage("此人信息已存在！");
+        else if(imgUri==null)
+        {
+            resultDialog.setMessage("请拍摄照片！");
             resultDialog.show();
         }
         else {
-
-            Log.i("UF", "开始上传信息");
-            new Thread(){
+            Thread t = new Thread() {
                 @Override
-                public void run()
-                {
-                    AccessBaiduManager.uploadFaceInform(((MainActivity) getActivity()).getBitmap(), uname, uinform);
+                public void run() {
+                    AccessBaiduManager.sendPhotoToMultiRecognize(getActivity(), ((MainActivity) getActivity()).getBitmap());
                 }
-            }.start();
-            resultDialog.setMessage("成功添加至信息库！");
-            resultDialog.show();
+            };
+            t.start();
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            AccessBaiduManager.handleBaiDuRecognizeResponse(((MainActivity) getActivity()).getRecognizeResult(), getActivity(), this);
+        }
+        Log.i("UF", score + "");
+        if(errorCode == 0) {
+            if (personList.get(0).getScore() >= 80) {
+                resultDialog.setMessage("此人信息已存在！");
+                resultDialog.show();
+            } else {
+
+                Log.i("UF", "开始上传信息");
+                new Thread() {
+                    @Override
+                    public void run() {
+                        AccessBaiduManager.uploadFaceInform(((MainActivity) getActivity()).getBitmap(), uname, uinform);
+                    }
+                }.start();
+                resultDialog.setMessage("成功添加至信息库！");
+                resultDialog.show();
+            }
+        }
+        else
+        {
+            if(errorCode == 222202) {
+                resultDialog.setMessage("未识别到人脸");
+                resultDialog.show();
+            }
         }
 
-        //resultDialog.setMessage("成功添加至信息库！");
-        //resultDialog.show();
     }
 
 }

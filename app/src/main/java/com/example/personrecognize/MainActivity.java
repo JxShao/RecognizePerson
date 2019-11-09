@@ -61,6 +61,7 @@ public class MainActivity extends AppCompatActivity{
                     try {
                         rf = (RecognizeFragment)getSupportFragmentManager().findFragmentByTag("RecognizeFragment");
                         bitmap = PhotoManager.handleTakenPhoto(this,rf.getImgUri());
+                        rf.setBitmap(bitmap);
                         ((ImageView)rf.getView().findViewById(R.id.rf_showPhotoIv)).setImageBitmap(bitmap);
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();

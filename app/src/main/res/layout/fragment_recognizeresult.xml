@@ -4,12 +4,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/rrf_showInformTv"
-        android:text="返回的信息"
+    <ListView
+        android:id="@+id/rrf_personLv"
         android:layout_width="match_parent"
-        android:gravity="center"
-        android:layout_height="50dp">
-    </TextView>
+        android:layout_height="wrap_content">
+    </ListView>
+
 
 </LinearLayout>

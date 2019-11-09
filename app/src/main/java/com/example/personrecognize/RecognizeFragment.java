@@ -55,6 +55,8 @@ public class RecognizeFragment extends Fragment implements View.OnClickListener 
     private Bitmap bitmap;
     private Response response;
 
+    public Bitmap getBitmap() { return bitmap; }
+    public void setBitmap(Bitmap bitmap) { this.bitmap = bitmap; }
     public Uri getImgUri() {
         return imgUri;
     }
